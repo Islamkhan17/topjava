@@ -30,6 +30,7 @@
 <h3><a href="index.html">Home</a></h3>
 <hr>
 <h2>Meals</h2>
+<td><a href="meals?action=create&mealId=<c:out value="${meal.id}"/>">Create</a></td>
 <table>
     <c:forEach items="${mealsTo}" var="meal">
         <c:choose>
@@ -41,10 +42,13 @@
             </c:otherwise>
         </c:choose>
         <tr style="color: ${color};">
-            <td>${meal.dateTimeFormat}</td>
+            <td>${meal.id}</td>
+            <td>${FORMATTER.format(meal.dateTime)}</td>
             <td>${meal.description}</td>
             <td>${meal.calories}</td>
             <td>${meal.excess}</td>
+            <td><a href="meals?action=edit&mealId=<c:out value="${meal.id}"/>">Update</a></td>
+            <td><a href="meals?action=remove&mealId=<c:out value="${meal.id}"/>">Remove</a></td>
         </tr>
     </c:forEach>
 </table>
