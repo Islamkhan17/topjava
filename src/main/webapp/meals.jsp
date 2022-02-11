@@ -1,10 +1,3 @@
-<%--
-  Created by IntelliJ IDEA.
-  User: user
-  Date: 09.02.2022
-  Time: 15:22
-  To change this template use File | Settings | File Templates.
---%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
@@ -12,7 +5,6 @@
     <title>Meals</title>
     <style type="text/css">
         TABLE {
-            /*width: 300px; !* Ширина таблицы *!*/
             border: 1px solid black; /* Рамка вокруг таблицы */
         }
         TD, TH {
@@ -22,7 +14,6 @@
         TH {
             text-align: left; /* Выравнивание по левому краю */
             background: white; /* Цвет фона */
-            /*color: black; !* Цвет текста *!*/
         }
     </style>
 </head>
@@ -33,15 +24,8 @@
 <td><a href="meals?action=create&mealId=<c:out value="${meal.id}"/>">Create</a></td>
 <table>
     <c:forEach items="${mealsTo}" var="meal">
-        <c:choose>
-            <c:when test="${meal.excess eq true}">
-                <c:set var="color" value="red"/>
-            </c:when>
-            <c:otherwise>
-                <c:set var="color" value="green"/>
-            </c:otherwise>
-        </c:choose>
-        <tr style="color: ${color};">
+        <jsp:useBean id="meal" scope="page" type="ru.javawebinar.topjava.model.MealTo"/>
+        <tr style="color:${meal.excess ? 'red' : 'green'}";>
             <td>${meal.id}</td>
             <td>${FORMATTER.format(meal.dateTime)}</td>
             <td>${meal.description}</td>
