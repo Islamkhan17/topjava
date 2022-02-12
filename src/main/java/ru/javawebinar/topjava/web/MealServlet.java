@@ -1,8 +1,8 @@
 package ru.javawebinar.topjava.web;
 
 import org.slf4j.Logger;
-import ru.javawebinar.topjava.DAO.MealsDAO;
-import ru.javawebinar.topjava.DAO.MealsDAOImpl;
+import ru.javawebinar.topjava.repository.MealRepository;
+import ru.javawebinar.topjava.repository.MealRepositoryImpl;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.model.MealTo;
 import ru.javawebinar.topjava.util.MealsUtil;
@@ -26,19 +26,19 @@ public class MealServlet extends HttpServlet {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static String INSERT_OR_EDIT = "/editMeal.jsp";
     private static String LIST_MEALS = "/meals.jsp";
-    private MealsDAO<Meal> mealsDAO;
+    private MealRepository<Meal> mealsDAO;
 
     public MealServlet() {
         super();
         log.debug("MealServlet object create");
-        mealsDAO = new MealsDAOImpl();
+        mealsDAO = new MealRepositoryImpl();
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         log.debug("forward to meal");
 
-        List<MealTo> listMealTo = MealsUtil.filteredByStreamsWithoutTime(mealsDAO.getMeals(), MealsDAOImpl.CALORIES_PER_DAY);
+        List<MealTo> listMealTo = MealsUtil.filteredByStreamsWithoutTime(mealsDAO.getMeals(), MealRepositoryImpl.CALORIES_PER_DAY);
         req.setAttribute("FORMATTER", DATE_TIME_FORMATTER);
         req.setAttribute("mealsTo", listMealTo);
 
@@ -91,7 +91,7 @@ public class MealServlet extends HttpServlet {
         LocalDateTime dateTime = LocalDateTime.parse(req.getParameter("date"));
         Meal meal = mealsDAO.getMealById(mealId);
         if (meal == null) {
-            meal = new Meal(MealsDAOImpl.ID++, dateTime, description, calories);
+            meal = new Meal(MealRepositoryImpl.ID++, dateTime, description, calories);
             mealsDAO.addMeal(meal);
         } else {
             meal.setDescription(description);
@@ -101,7 +101,7 @@ public class MealServlet extends HttpServlet {
 
         req.setAttribute("FORMATTER", DATE_TIME_FORMATTER);
         req.setAttribute("mealsTo",
-                MealsUtil.filteredByStreamsWithoutTime(mealsDAO.getMeals(), MealsDAOImpl.CALORIES_PER_DAY));
+                MealsUtil.filteredByStreamsWithoutTime(mealsDAO.getMeals(), MealRepositoryImpl.CALORIES_PER_DAY));
         RequestDispatcher view = req.getRequestDispatcher(LIST_MEALS);
         view.forward(req, resp);
     }

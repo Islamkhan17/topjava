@@ -1,4 +1,4 @@
-package ru.javawebinar.topjava.DAO;
+package ru.javawebinar.topjava.repository;
 
 import ru.javawebinar.topjava.model.Meal;
 
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MealsDAOImpl implements MealsDAO<Meal> {
+public class MealRepositoryImpl implements MealRepository<Meal> {
     public List<Meal> meals = new ArrayList<>();
     public static final Integer CALORIES_PER_DAY = 2000;
     public static Integer ID = 1;
