@@ -7,7 +7,6 @@ import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.model.MealTo;
 import ru.javawebinar.topjava.util.MealsUtil;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -16,7 +15,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -24,85 +25,66 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class MealServlet extends HttpServlet {
     private static final Logger log = getLogger(MealServlet.class);
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static String INSERT_OR_EDIT = "/editMeal.jsp";
-    private static String LIST_MEALS = "/meals.jsp";
-    private MealRepository<Meal> mealsDAO;
-
-    public MealServlet() {
-        super();
-        log.debug("MealServlet object create");
-        mealsDAO = new MealRepositoryImpl();
-    }
+    private MealRepository<Meal> repository;
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        log.debug("forward to meal");
-
-        List<MealTo> listMealTo = MealsUtil.filteredByStreamsWithoutTime(mealsDAO.getMeals(), MealRepositoryImpl.CALORIES_PER_DAY);
-        req.setAttribute("FORMATTER", DATE_TIME_FORMATTER);
-        req.setAttribute("mealsTo", listMealTo);
-
-        String forward = "";
-        String action = req.getParameter("action");
-
-        if (action == null) {
-            log.debug("action = " + null);
-
-            forward = LIST_MEALS;
-
-        } else if (action.equalsIgnoreCase("remove")) {
-            log.debug("action = " + action);
-
-            int mealId = Integer.parseInt(req.getParameter("mealId"));
-            mealsDAO.deleteMeal(mealId);
-            resp.sendRedirect("meals");
-            return;
-
-        } else if (action.equalsIgnoreCase("edit")) {
-            log.debug("action = " + action);
-
-            forward = INSERT_OR_EDIT;
-            int mealId = Integer.parseInt(req.getParameter("mealId"));
-            Meal meal = mealsDAO.getMealById(mealId);
-            req.setAttribute("meal", meal);
-
-        } else {
-            log.debug("action = " + action);
-            forward = INSERT_OR_EDIT;
-        }
-
-        log.debug("forward to " + forward);
-        RequestDispatcher view = req.getRequestDispatcher(forward);
-        view.forward(req, resp);
+    public void init() {
+        log.debug("MealServlet object create");
+        repository = new MealRepositoryImpl();
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
-        int mealId = 0;
-        try {
-            mealId = Integer.parseInt(req.getParameter("mealId"));
 
-        } catch (NumberFormatException e){
-            log.debug("mealId is empty create new meal");
-        }
-        int calories = Integer.parseInt(req.getParameter("calories"));
-        String description = req.getParameter("description");
-        LocalDateTime dateTime = LocalDateTime.parse(req.getParameter("date"));
-        Meal meal = mealsDAO.getMealById(mealId);
-        if (meal == null) {
-            meal = new Meal(MealRepositoryImpl.ID++, dateTime, description, calories);
-            mealsDAO.addMeal(meal);
-        } else {
-            meal.setDescription(description);
-            meal.setCalories(calories);
-            meal.setDateTime(dateTime);
-        }
+        String id = req.getParameter("id");
 
-        req.setAttribute("FORMATTER", DATE_TIME_FORMATTER);
-        req.setAttribute("mealsTo",
-                MealsUtil.filteredByStreamsWithoutTime(mealsDAO.getMeals(), MealRepositoryImpl.CALORIES_PER_DAY));
-        RequestDispatcher view = req.getRequestDispatcher(LIST_MEALS);
-        view.forward(req, resp);
+        log.debug("Post/ id = "+id);
+        Meal meal = new Meal(id.isEmpty() ? null : Integer.valueOf(id),
+                LocalDateTime.parse(req.getParameter("date")),
+                req.getParameter("description"),
+                Integer.parseInt(req.getParameter("calories")));
+
+
+        log.debug(meal.getId() +", " +meal.getDescription());
+        log.info(meal.isNew() ? "Create {}" : "Update {}", meal);
+        repository.save(meal);
+        resp.sendRedirect("meals");
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String action = req.getParameter("action");
+        log.debug("Get / action = "+action);
+        switch (action == null ? "all" : action) {
+            case "delete":
+                int id = Integer.parseInt(req.getParameter("id"));
+                log.info("Delete {}", id);
+                repository.delete(id);
+                resp.sendRedirect("meals");
+                break;
+            case "update":
+            case "create":
+                final Meal meal = "create".equals(action) ?
+                        new Meal(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES), "", 1000) :
+                        repository.get(getId(req));
+                req.setAttribute("meal", meal);
+                req.getRequestDispatcher("/editMeal.jsp").forward(req, resp);
+                break;
+            case "all":
+            default:
+                log.info("getAll");
+                List<MealTo> listMealTo = MealsUtil.filteredByStreamsWithoutTime(repository.getAll(), MealRepositoryImpl.CALORIES_PER_DAY);
+                req.setAttribute("FORMATTER", DATE_TIME_FORMATTER);
+                req.setAttribute("mealsTo", listMealTo);
+                req.getRequestDispatcher("/meals.jsp").forward(req, resp);
+                break;
+        }
+    }
+
+
+    private int getId(HttpServletRequest request) {
+        String paramId = Objects.requireNonNull(request.getParameter("id"));
+        return Integer.parseInt(paramId);
     }
 }

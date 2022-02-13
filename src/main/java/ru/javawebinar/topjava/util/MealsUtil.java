@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Month;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -21,11 +22,11 @@ public class MealsUtil {
        return filteredByStreams(meals,caloriesPerDay, meal -> TimeUtil.isBetweenHalfOpen(meal.getTime(), startTime, endTime));
     }
 
-    public static List<MealTo> filteredByStreamsWithoutTime(List<Meal> meals, int caloriesPerDay) {
+    public static List<MealTo> filteredByStreamsWithoutTime(Collection<Meal> meals, int caloriesPerDay) {
         return filteredByStreams(meals,caloriesPerDay,meal -> true);
     }
 
-    public static List<MealTo> filteredByStreams(List<Meal> meals, int caloriesPerDay, Predicate<Meal> filter) {
+    public static List<MealTo> filteredByStreams(Collection<Meal> meals, int caloriesPerDay, Predicate<Meal> filter) {
         Map<LocalDate, Integer> caloriesSumByDate = meals.stream()
                 .collect(
                         Collectors.groupingBy(Meal::getDate, Collectors.summingInt(Meal::getCalories))
