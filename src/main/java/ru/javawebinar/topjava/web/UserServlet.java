@@ -18,4 +18,19 @@ public class UserServlet extends HttpServlet {
         log.debug("forward to users");
         request.getRequestDispatcher("/users.jsp").forward(request, response);
     }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        req.setCharacterEncoding("UTF-8");
+
+        log.debug("UserServlet Post request");
+        String user = req.getParameter("user");
+        log.debug("user = " + user);
+        if (user.equals("admin")) {
+            SecurityUtil.setAuthUserId(2);
+        } else if (user.equals("user1")) {
+            SecurityUtil.setAuthUserId(1);
+        }
+        resp.sendRedirect("meals");
+    }
 }
