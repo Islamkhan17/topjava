@@ -86,18 +86,25 @@ public class MealServiceTest {
     }
 
     @Test
+    public void updateAnotherUserMeal() {
+        Meal updated = getUpdated();
+        assertThrows(NotFoundException.class, () -> service.update(updated, GUEST_ID));
+    }
+
+
+    @Test
     public void create() {
-        Meal created1 = service.create(getNew(), GUEST_ID);
-        System.out.println(created1);
-        Integer newId1 = created1.getId();
+        Meal created = service.create(getNew(), GUEST_ID);
+        System.out.println(created);
+        Integer newId = created.getId();
         Meal newMeal = getNew();
-        newMeal.setId(newId1);
-        assertMatch(created1, newMeal);
-        assertMatch(service.get(newId1, GUEST_ID), newMeal);
+        newMeal.setId(newId);
+        assertMatch(created, newMeal);
+        assertMatch(service.get(newId, GUEST_ID), newMeal);
     }
 
     @Test
-    public void duplicateDateCreate() {
+    public void duplicateDateTimeCreate() {
         assertThrows(DataAccessException.class, () ->
                 service.create(new Meal(LocalDateTime.of(2020, Month.JANUARY, 30, 07, 30), "дупликатЗавтрака", 1100), GUEST_ID));
     }
