@@ -1,7 +1,17 @@
 package ru.javawebinar.topjava.service;
 
+import org.hsqldb.lib.StopWatch;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
+import org.junit.rules.Stopwatch;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
+import org.junit.runners.model.Statement;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.test.context.ContextConfiguration;
@@ -13,8 +23,11 @@ import ru.javawebinar.topjava.util.exception.NotFoundException;
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.slf4j.LoggerFactory.getLogger;
 import static ru.javawebinar.topjava.MealTestData.*;
 import static ru.javawebinar.topjava.UserTestData.ADMIN_ID;
 import static ru.javawebinar.topjava.UserTestData.USER_ID;
@@ -26,9 +39,42 @@ import static ru.javawebinar.topjava.UserTestData.USER_ID;
 @RunWith(SpringRunner.class)
 @Sql(scripts = "classpath:db/populateDB.sql", config = @SqlConfig(encoding = "UTF-8"))
 public class MealServiceTest {
+    private static final Logger log = getLogger(MealServiceTest.class);
+
+    private static final StringBuilder results = new StringBuilder();
+
 
     @Autowired
     private MealService service;
+
+    @Rule
+    public final Stopwatch stopWatch = new Stopwatch() {
+        @Override
+        protected void finished(long nanos, Description description) {
+            String strResult = String.format("%-95s %7d",
+                    description.getMethodName(), TimeUnit.NANOSECONDS.toMicros(nanos));
+            results.append(strResult).append('\n');
+            log.info(strResult);
+        }
+    };
+
+    @ClassRule
+    public static final ExternalResource SUMMARY = new ExternalResource() {
+
+        //обнуляем перед запуском тестов класса
+        @Override
+        protected void before() throws Throwable {
+            results.setLength(0);
+        }
+
+        //выводим отформатированный результат
+        @Override
+        protected void after() {
+            log.info("\n" +
+                    "\nTest                                                                                       Duration, ms" +
+                    "\n" + "\n" + results + "\n");
+        }
+    };
 
     @Test
     public void delete() {
